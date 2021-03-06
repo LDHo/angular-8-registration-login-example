@@ -1,9 +1,10 @@
-﻿<h1>Hi {{currentUser?.firstName}}!</h1>
-<p>You're logged in with Angular 8!!</p>
+﻿<h1>Hi {{ currentUserEmail }}!</h1>
+<p *ngIf="!completedForm">Please help to fill up the form below</p>
+<p *ngIf="completedForm">You have already completed your form previously</p>
 <form [formGroup]="contactForm" (ngSubmit)="onSubmit()">
     <div class="form-group">
         <label for="lastName">Last Name</label>
-        <input type="text" formControlName="lastName" class="form-control" [ngClass]="{ 'is-invalid': submitted && f.lastName.errors }" />
+        <input type="text" formControlName="lastName" class="form-control" [ngClass]="{ 'is-invalid': submitted && f.lastName.errors }" [readonly]="completedForm" />
         <div *ngIf="submitted && f.lastName.errors" class="invalid-feedback">
             <div *ngIf="f.lastName.errors.required">Last Name is required</div>
             <div *ngIf="f.lastName.errors.minlength">Last Name must be at least 2 characters</div>
@@ -12,7 +13,7 @@
     </div>
     <div class="form-group">
         <label for="firstName">First Name</label>
-        <input type="firstName" formControlName="firstName" class="form-control" [ngClass]="{ 'is-invalid': submitted && f.firstName.errors }" />
+        <input type="firstName" formControlName="firstName" class="form-control" [ngClass]="{ 'is-invalid': submitted && f.firstName.errors }" [readonly]="completedForm" />
         <div *ngIf="submitted && f.firstName.errors" class="invalid-feedback">
             <div *ngIf="f.firstName.errors.required">First Name is required</div>
             <div *ngIf="f.firstName.errors.minlength">First Name must be at least 2 characters</div>
@@ -21,7 +22,7 @@
     </div>
     <div class="form-group">
         <label for="birthday">Birthday</label>
-        <input type="date" formControlName="birthday" class="form-control" [ngClass]="{ 'is-invalid': submitted && f.birthday.errors }" />
+        <input type="date" formControlName="birthday" class="form-control" [ngClass]="{ 'is-invalid': submitted && f.birthday.errors }" [readonly]="completedForm" />
         <div *ngIf="submitted && f.birthday.errors" class="invalid-feedback">
             <div *ngIf="f.birthday.errors.required">Birthday is required</div>
             <div *ngIf="f.birthday.errors.invalidDate">Are you born from future?</div>
@@ -29,7 +30,7 @@
     </div>
     <div class="form-group">
         <label for="ssn">Social Security Number</label>
-        <input type="text" formControlName="ssn" class="form-control" [ngClass]="{ 'is-invalid': submitted && f.ssn.errors }" placeholder="###-##-####" />
+        <input type="text" formControlName="ssn" class="form-control" [ngClass]="{ 'is-invalid': submitted && f.ssn.errors }" placeholder="###-##-####" [readonly]="completedForm" />
         <div *ngIf="submitted && f.ssn.errors" class="invalid-feedback">
             <div *ngIf="f.ssn.errors.required">Social Security Number is required</div>
             <div *ngIf="f.ssn.errors.pattern">Invalid format of SSN</div>

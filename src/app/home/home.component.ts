@@ -2,28 +2,34 @@
 import { first } from 'rxjs/operators';
 
 import { User } from '@/_models';
-import { UserService, AuthenticationService, AlertService } from '@/_services';
+import { UserService, AuthenticationService, AlertService, LocalStorageService } from '@/_services';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CustomValidator } from '@/_helpers/validator';
+import { StorageKey } from '@/_models/storage';
 
 @Component({ templateUrl: 'home.component.html' })
 export class HomeComponent implements OnInit {
-    currentUser: User;
     contactForm: FormGroup;
     completedForm = false;
     loading = false;
     submitted = false;
     returnUrl: string;
+    currentUserEmail: string;
 
     constructor(
         private authenticationService: AuthenticationService,
         private userService: UserService,
         private alertService: AlertService,
         private formBuilder: FormBuilder,
-        private router: Router
+        private router: Router,
+        private localStorage: LocalStorageService
     ) {
-        this.currentUser = this.authenticationService.currentUserValue;
+        const email = this.localStorage.get(StorageKey.EMAIL);
+        console.log(email);
+        if (email) {
+            this.currentUserEmail = this.localStorage.get(StorageKey.EMAIL);
+        }
     }
 
     ngOnInit() {
@@ -50,14 +56,14 @@ export class HomeComponent implements OnInit {
         this.userService.getProfile().subscribe((user: User) => {
             if (user.lastName && user.firstName && user.birthday && user.ssn) {
                 this.completedForm = true;
+                const { lastName, firstName, birthday, ssn } = user;
+                this.contactForm.setValue({
+                    lastName,
+                    firstName,
+                    birthday: birthday.match((/\d{1,4}([.\-/])\d{1,2}([.\-/])\d{1,4}/))[0],
+                    ssn
+                })
             }
-            const { lastName, firstName, birthday, ssn } = user;
-            this.contactForm.setValue({
-                lastName,
-                firstName,
-                birthday: birthday.match((/\d{1,4}([.\-/])\d{1,2}([.\-/])\d{1,4}/))[0],
-                ssn
-            })
         })
     }
 
@@ -92,6 +98,7 @@ export class HomeComponent implements OnInit {
                 data => {
                     this.alertService.success('Form Data Submitted');
                     this.loading = false;
+                    this.completedForm = true;
                 },
                 error => {
                     this.alertService.error(error);

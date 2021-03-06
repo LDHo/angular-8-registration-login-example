@@ -36,6 +36,7 @@ export class AuthenticationService {
             const decodedToken: JWTTokenPayload = this.jwtService.getDecodeToken(user.token);
             this.storageService.set(StorageKey.CURRENT_USER_SESSION_TOKEN, user.token);
             this.storageService.set(StorageKey.CURRENT_USER_ID, decodedToken.id);
+            this.storageService.set(StorageKey.EMAIL, email);
         }));
     }
 
@@ -54,7 +55,8 @@ export class AuthenticationService {
     logout() {
         // remove user from local storage and set current user to null
         this.storageService.remove(StorageKey.CURRENT_USER_SESSION_TOKEN);
-        this.currentUserSubject.next(null);
+        this.storageService.remove(StorageKey.CURRENT_USER_ID);
+        this.storageService.remove(StorageKey.EMAIL);
         location.reload(true);
     }
 }

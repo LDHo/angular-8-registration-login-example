@@ -7,7 +7,7 @@ import { AuthenticationService } from '@/_services';
 
 @Injectable()
 export class ErrorInterceptor implements HttpInterceptor {
-    constructor(private authenticationService: AuthenticationService) {}
+    constructor(private authenticationService: AuthenticationService) { }
 
     intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
         return next.handle(request).pipe(catchError(err => {
@@ -16,7 +16,21 @@ export class ErrorInterceptor implements HttpInterceptor {
                 this.authenticationService.logout();
                 location.reload(true);
             }
-            const error = err.error.message || err.statusText || err.error.error.message;
+            let error;
+            switch (err.status) {
+                case 0: {
+                    error = 'Unknown Error Occured. Please Check your Internet';
+                    break;
+                }
+                case 400:
+                case 401: {
+                    error = err.error.error.message;
+                    console.log(err);
+                    break;
+                }
+
+            }
+            // const error = err.error.message || err.statusText || err.error.error.message;
             return throwError(error);
         }))
     }
