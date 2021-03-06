@@ -11,13 +11,12 @@ export class ErrorInterceptor implements HttpInterceptor {
 
     intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
         return next.handle(request).pipe(catchError(err => {
-            if (err.status === 401) {
-                // auto logout if 401 response returned from api
+            if (this.authenticationService.isUserSessionExpired() && this.authenticationService.getUserSessionToken()) {
+                // has session token but it was already expired
                 this.authenticationService.logout();
                 location.reload(true);
             }
-            
-            const error = err.error.message || err.statusText;
+            const error = err.error.message || err.statusText || err.error.error.message;
             return throwError(error);
         }))
     }

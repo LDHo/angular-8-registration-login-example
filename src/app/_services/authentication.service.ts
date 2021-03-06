@@ -3,14 +3,26 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { User } from '@/_models';
+import { LoginResponse, User } from '@/_models';
+import { environment } from '@/environments/environment';
+import { LocalStorageService } from './local-storage.service';
+import { StorageKey } from '@/_models/storage';
+import { JWTTokenService } from './jwt.service';
+import { JWTTokenPayload } from '@/_models/jwt-token';
+import { Router } from '@angular/router';
+import { UserService } from './user.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthenticationService {
     private currentUserSubject: BehaviorSubject<User>;
     public currentUser: Observable<User>;
 
-    constructor(private http: HttpClient) {
+    constructor(
+        private http: HttpClient,
+        private storageService: LocalStorageService,
+        private jwtService: JWTTokenService,
+        private userService: UserService
+    ) {
         this.currentUserSubject = new BehaviorSubject<User>(JSON.parse(localStorage.getItem('currentUser')));
         this.currentUser = this.currentUserSubject.asObservable();
     }
@@ -19,19 +31,30 @@ export class AuthenticationService {
         return this.currentUserSubject.value;
     }
 
-    login(username, password) {
-        return this.http.post<any>(`${config.apiUrl}/users/authenticate`, { username, password })
-            .pipe(map(user => {
-                // store user details and jwt token in local storage to keep user logged in between page refreshes
-                localStorage.setItem('currentUser', JSON.stringify(user));
-                this.currentUserSubject.next(user);
-                return user;
-            }));
+    login(email: string, password: string) {
+        return this.http.post<LoginResponse>(`${environment.apiUrl}/users/login`, { email, password }).pipe(map((user: LoginResponse) => {
+            const decodedToken: JWTTokenPayload = this.jwtService.getDecodeToken(user.token);
+            this.storageService.set(StorageKey.CURRENT_USER_SESSION_TOKEN, user.token);
+            this.storageService.set(StorageKey.CURRENT_USER_ID, decodedToken.id);
+        }));
+    }
+
+    isUserSessionExpired() {
+        const token = this.storageService.get(StorageKey.CURRENT_USER_SESSION_TOKEN);
+        if (token) {
+            return this.jwtService.isTokenExpired(token);
+        }
+        return true;
+    }
+
+    getUserSessionToken(): string {
+        return this.storageService.get(StorageKey.CURRENT_USER_SESSION_TOKEN);
     }
 
     logout() {
         // remove user from local storage and set current user to null
-        localStorage.removeItem('currentUser');
+        this.storageService.remove(StorageKey.CURRENT_USER_SESSION_TOKEN);
         this.currentUserSubject.next(null);
+        location.reload(true);
     }
 }

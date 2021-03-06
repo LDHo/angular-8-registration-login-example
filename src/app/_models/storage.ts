@@ -1,0 +1,4 @@
+export const enum StorageKey {
+  CURRENT_USER_SESSION_TOKEN = 'CURRENT_USER_SESSION_TOKEN',
+  CURRENT_USER_ID = 'USER_ID'
+}

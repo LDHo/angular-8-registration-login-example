@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { first } from 'rxjs/operators';
 
 import { AlertService, UserService, AuthenticationService } from '@/_services';
+import { CustomValidator } from '@/_helpers/validator';
 
 @Component({ templateUrl: 'register.component.html' })
 export class RegisterComponent implements OnInit {
@@ -19,17 +20,28 @@ export class RegisterComponent implements OnInit {
         private alertService: AlertService
     ) {
         // redirect to home if already logged in
-        if (this.authenticationService.currentUserValue) {
+        if (!this.authenticationService.isUserSessionExpired()) {
             this.router.navigate(['/']);
         }
     }
 
     ngOnInit() {
         this.registerForm = this.formBuilder.group({
-            firstName: ['', Validators.required],
-            lastName: ['', Validators.required],
-            username: ['', Validators.required],
-            password: ['', [Validators.required, Validators.minLength(6)]]
+            email: ['', [
+                Validators.required,
+                Validators.email
+            ]],
+            password: ['', [
+                Validators.required,
+                CustomValidator.patternValidator(/\d/, { hasNumber: true }),
+                CustomValidator.patternValidator(/[A-Z]/, { hasCapitalCase: true }),
+                CustomValidator.patternValidator(/[a-z]/, { hasSmallCase: true}),
+                Validators.minLength(8),
+                Validators.maxLength(100)
+            ]],
+            confirmPassword: ['', Validators.required]
+        },{
+            validators: CustomValidator.passwordMatchValidator
         });
     }
 
@@ -48,7 +60,8 @@ export class RegisterComponent implements OnInit {
         }
 
         this.loading = true;
-        this.userService.register(this.registerForm.value)
+        const {email, password} = this.registerForm.value;
+        this.userService.register({email, password})
             .pipe(first())
             .subscribe(
                 data => {

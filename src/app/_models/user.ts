@@ -1,8 +1,18 @@
 ﻿export class User {
-    id: number;
-    username: string;
+    id: string;
+    email: string;
+    firstName?: string;
+    lastName?: string;
+    birthday?: string;
+    ssn?: string;
+}
+
+export class UserRegisterRequestPayload {
+    email: string;
     password: string;
-    firstName: string;
-    lastName: string;
+}
+
+
+export class LoginResponse {
     token: string;
 }
