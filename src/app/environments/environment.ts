@@ -1,4 +1,4 @@
 
 export const environment = {
-  apiUrl: 'http://localhost:3000'
+  apiUrl: 'https://u0owlfwrp3.execute-api.ap-southeast-1.amazonaws.com/demo'
 }

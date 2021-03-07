@@ -9,11 +9,10 @@ import { LocalStorageService } from './local-storage.service';
 import { StorageKey } from '@/_models/storage';
 import { JWTTokenService } from './jwt.service';
 import { JWTTokenPayload } from '@/_models/jwt-token';
-import { Router } from '@angular/router';
-import { UserService } from './user.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthenticationService {
+
     private currentUserSubject: BehaviorSubject<User>;
     public currentUser: Observable<User>;
 
@@ -21,10 +20,15 @@ export class AuthenticationService {
         private http: HttpClient,
         private storageService: LocalStorageService,
         private jwtService: JWTTokenService,
-        private userService: UserService
     ) {
-        this.currentUserSubject = new BehaviorSubject<User>(JSON.parse(localStorage.getItem('currentUser')));
+
+        this.currentUserSubject = new BehaviorSubject<User>(null);
         this.currentUser = this.currentUserSubject.asObservable();
+        const token = this.getUserSessionToken();
+        if (token && !this.isUserSessionExpired()) {
+            const decodedToken: User = this.jwtService.getDecodeToken(token);
+            this.currentUserSubject.next(decodedToken);
+        }
     }
 
     public get currentUserValue(): User {
@@ -33,14 +37,15 @@ export class AuthenticationService {
 
     login(email: string, password: string) {
         return this.http.post<LoginResponse>(`${environment.apiUrl}/users/login`, { email, password }).pipe(map((user: LoginResponse) => {
-            const decodedToken: JWTTokenPayload = this.jwtService.getDecodeToken(user.token);
+            const decodedToken: User = this.jwtService.getDecodeToken(user.token);
             this.storageService.set(StorageKey.CURRENT_USER_SESSION_TOKEN, user.token);
             this.storageService.set(StorageKey.CURRENT_USER_ID, decodedToken.id);
             this.storageService.set(StorageKey.EMAIL, email);
+            this.currentUserSubject.next(decodedToken);
         }));
     }
 
-    isUserSessionExpired() {
+    isUserSessionExpired(): boolean {
         const token = this.storageService.get(StorageKey.CURRENT_USER_SESSION_TOKEN);
         if (token) {
             return this.jwtService.isTokenExpired(token);
@@ -57,6 +62,7 @@ export class AuthenticationService {
         this.storageService.remove(StorageKey.CURRENT_USER_SESSION_TOKEN);
         this.storageService.remove(StorageKey.CURRENT_USER_ID);
         this.storageService.remove(StorageKey.EMAIL);
+        this.currentUserSubject.next(null)
         location.reload(true);
     }
 }

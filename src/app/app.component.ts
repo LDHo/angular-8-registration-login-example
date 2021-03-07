@@ -8,13 +8,13 @@ import './_content/app.less';
 
 @Component({ selector: 'app', templateUrl: 'app.component.html' })
 export class AppComponent {
-    currentSession: boolean;
+    currentUser: User;
 
     constructor(
         private router: Router,
         private authenticationService: AuthenticationService
     ) {
-        this.currentSession = !this.authenticationService.isUserSessionExpired();
+        this.authenticationService.currentUser.subscribe((user: User) => this.currentUser = user);
     }
 
     logout() {

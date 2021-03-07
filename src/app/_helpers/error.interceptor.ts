@@ -25,7 +25,14 @@ export class ErrorInterceptor implements HttpInterceptor {
                 case 400:
                 case 401: {
                     error = err.error.error.message;
-                    console.log(err);
+                    break;
+                }
+                case 503: {
+                    error = 'Server might probably under maintenance';
+                    break;
+                }
+                default: {
+                    error = 'Unexpected error occured';
                     break;
                 }
 
